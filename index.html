@@ -5,539 +5,311 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recursion Relay</title>
   <style>
-    :root {
-      --bg1: #0b1220;
-      --bg2: #172554;
-      --panel: rgba(15, 23, 42, 0.9);
-      --panel2: rgba(30, 41, 59, 0.95);
-      --line: rgba(148, 163, 184, 0.2);
-      --text: #e5eefb;
-      --muted: #b8c6db;
-      --accent: #7dd3fc;
-      --accent2: #c084fc;
-      --good: #34d399;
-      --bad: #f87171;
-      --warn: #fbbf24;
-      --shadow: 0 20px 60px rgba(0,0,0,.35);
-      --radius: 24px;
+    * {
+      box-sizing: border-box;
     }
 
-    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(125,211,252,.14), transparent 25%),
-        radial-gradient(circle at 80% 5%, rgba(192,132,252,.16), transparent 22%),
-        linear-gradient(135deg, var(--bg1), var(--bg2) 60%, #0f172a);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, #f9fbff 100%);
+      color: #1f2a44;
+      text-align: center;
     }
 
-    .wrap {
-      width: min(1250px, calc(100% - 28px));
-      margin: 0 auto;
-      padding: 22px 0 36px;
-    }
-
-    .hidden { display: none !important; }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .hero-card, .side-card, .score-card, .question-card, .node-card, .end-card {
-      padding: 24px;
-    }
-
-    .small-label {
-      text-transform: uppercase;
-      letter-spacing: .16em;
-      font-size: .72rem;
-      color: #93c5fd;
-      font-weight: 800;
-      margin-bottom: 8px;
+    header {
+      background: #2f5fbf;
+      color: white;
+      padding: 18px 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
     h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2.2rem, 4vw, 3.5rem);
-      line-height: 1.02;
-      letter-spacing: -.04em;
+      margin: 0;
+      font-size: 2rem;
     }
 
-    h2 {
-      margin: 0 0 12px;
-      font-size: clamp(1.45rem, 2vw, 2.1rem);
-      letter-spacing: -.03em;
+    .subtitle {
+      margin-top: 6px;
+      font-size: 1rem;
+      opacity: 0.95;
     }
 
-    .subtitle, .muted {
-      color: var(--muted);
-      line-height: 1.6;
+    .screen {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
     }
 
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 18px 0 22px;
-    }
-
-    .pill {
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(148,163,184,.12);
-      border: 1px solid rgba(148,163,184,.18);
-      font-size: .94rem;
-    }
-
-    .name-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-
-    input, button {
-      font: inherit;
-    }
-
-    .text-input {
-      flex: 1 1 280px;
-      min-width: 0;
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      border: 1px solid rgba(148,163,184,.22);
+    .card {
+      background: white;
       border-radius: 16px;
-      padding: 14px 16px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      margin: 0 auto 22px;
+    }
+
+    #startScreen .card,
+    #endScreen .card {
+      max-width: 620px;
+    }
+
+    input[type="text"] {
+      width: min(360px, 90%);
+      padding: 12px 14px;
+      font-size: 1rem;
+      border: 2px solid #c8d6f2;
+      border-radius: 10px;
       outline: none;
     }
 
-    .text-input:focus {
-      border-color: rgba(125,211,252,.5);
-      box-shadow: 0 0 0 4px rgba(125,211,252,.12);
+    input[type="text"]:focus {
+      border-color: #2f5fbf;
     }
 
-    .btn {
-      appearance: none;
-      border: 0;
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
-    }
-
-    .btn:hover { transform: translateY(-1px); }
-    .btn:active { transform: translateY(1px); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #08111d;
-      box-shadow: 0 10px 28px rgba(125,211,252,.22);
-    }
-    .btn-secondary {
-      background: rgba(148,163,184,.12);
-      color: var(--text);
-      border: 1px solid rgba(148,163,184,.18);
-    }
-
-    .side-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .side-item {
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(148,163,184,.12);
-      color: var(--muted);
-    }
-
-    .game {
-      display: grid;
-      grid-template-columns: 290px 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .score-card {
-      position: sticky;
-      top: 18px;
-    }
-
-    .score-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    .stat {
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(148,163,184,.12);
-    }
-
-    .stat strong {
-      display: block;
-      margin-top: 6px;
-      font-size: 1.35rem;
-    }
-
-    .meter {
-      height: 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      overflow: hidden;
-      border: 1px solid rgba(148,163,184,.15);
-      margin: 14px 0 8px;
-    }
-
-    .meter-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      transition: width .35s ease;
-    }
-
-    .question-card {
-      margin-bottom: 18px;
-    }
-
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      padding: 18px;
-      border-radius: 18px;
-      background: rgba(2, 8, 23, .92);
-      border: 1px solid rgba(125,211,252,.18);
-      color: #d8e9ff;
-      overflow-x: auto;
-    }
-
-    .message {
-      min-height: 30px;
-      margin-top: 16px;
-      font-weight: 750;
-    }
-    .message.good { color: var(--good); }
-    .message.bad { color: var(--bad); }
-    .message.warn { color: var(--warn); }
-
-    .tip {
+    button {
       margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(251,191,36,.08);
-      border: 1px solid rgba(251,191,36,.24);
-      color: #ffefc3;
-      line-height: 1.55;
+      padding: 12px 22px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #2f5fbf;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
 
-    .node-grid {
+    button:hover {
+      background: #264f9f;
+    }
+
+    .topBar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .pill {
+      background: white;
+      border: 2px solid #d9e4fb;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    #questionBox {
+      max-width: 860px;
+      margin: 0 auto 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+      padding: 22px;
+      text-align: left;
+      white-space: pre-wrap;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 1rem;
+      line-height: 1.45;
+    }
+
+    #message {
+      min-height: 30px;
+      margin: 8px 0 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .correctMsg {
+      color: #137333;
+    }
+
+    .wrongMsg {
+      color: #b3261e;
+    }
+
+    #nodes {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 14px;
+      max-width: 980px;
+      margin: 0 auto;
     }
 
     .node {
-      border: 1px solid rgba(148,163,184,.18);
-      background: var(--panel2);
-      color: var(--text);
-      border-radius: 22px;
-      min-height: 108px;
-      padding: 14px;
-      text-align: left;
-      cursor: pointer;
-      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+      min-height: 72px;
+      background: #e8f0ff;
+      border: 2px solid #2f5fbf;
+      border-radius: 14px;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 12px 28px rgba(0,0,0,.18);
-    }
-
-    .node:hover:not(:disabled) {
-      transform: translateY(-2px);
-      border-color: rgba(125,211,252,.42);
-      box-shadow: 0 14px 30px rgba(0,0,0,.24);
-    }
-
-    .node:disabled {
-      cursor: not-allowed;
-      opacity: .72;
-    }
-
-    .node-label {
-      font-size: .78rem;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-      color: #93c5fd;
-      font-weight: 800;
-    }
-
-    .node-answer {
-      font-size: 1.1rem;
-      font-weight: 850;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.2s ease, border-color 0.2s ease;
+      user-select: none;
       word-break: break-word;
-      line-height: 1.2;
-      margin-top: 10px;
     }
 
-    .node.start {
-      border-color: rgba(52,211,153,.45);
-      background: linear-gradient(180deg, rgba(52,211,153,.16), rgba(15,23,42,.95));
+    .node:hover:not(.used) {
+      background: #d9e8ff;
+      transform: translateY(-2px);
     }
 
-    .node.completed {
-      border-color: rgba(74, 222, 128, .9);
-      background: linear-gradient(180deg, rgba(74,222,128,.4), rgba(22,101,52,.9));
-      box-shadow: 0 0 0 2px rgba(134,239,172,.25), 0 14px 30px rgba(22,163,74,.22);
+    .node.wrongFlash {
+      background: #ffd4d4;
+      border-color: #c62828;
     }
 
-    .node.completed .node-label,
-    .node.completed .node-answer {
-      color: #f0fdf4;
+    .node.used {
+      background: #7edc8c;
+      border-color: #1b8a34;
+      color: #103d18;
+      cursor: not-allowed;
+      opacity: 1;
     }
 
-    .node.current {
-      border-color: rgba(125,211,252,.5);
-      background: linear-gradient(180deg, rgba(125,211,252,.12), rgba(15,23,42,.95));
+    .node.disabledTemp {
+      pointer-events: none;
     }
 
-    .node.wrongflash {
-      animation: wrongFlash .4s ease;
+    .smallNote {
+      margin-top: 12px;
+      color: #4d5b7c;
+      font-size: 0.95rem;
     }
 
-    @keyframes wrongFlash {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); background: rgba(248,113,113,.18); }
-      100% { transform: scale(1); }
+    .scoreLine {
+      font-size: 1.15rem;
+      margin: 10px 0;
     }
 
-    .end-card {
-      text-align: center;
+    .bigScore {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #1d4ed8;
     }
 
-    .scoreboard {
-      margin: 18px auto 0;
-      max-width: 560px;
-      padding: 20px;
-      border-radius: 22px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(148,163,184,.16);
+    .hidden {
+      display: none;
     }
 
-    .big-score {
-      font-size: clamp(2rem, 5vw, 3.6rem);
-      font-weight: 900;
-      letter-spacing: -.04em;
-      margin: 6px 0 10px;
-    }
+    @media (max-width: 640px) {
+      #questionBox {
+        font-size: 0.94rem;
+        padding: 18px;
+      }
 
-    .footer-note {
-      text-align: center;
-      color: var(--muted);
-      margin-top: 16px;
-      font-size: .95rem;
-    }
-
-    @media (max-width: 980px) {
-      .hero, .game { grid-template-columns: 1fr; }
-      .score-card { position: static; }
-    }
-
-    @media (max-width: 760px) {
-      .node-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .hero-card, .side-card, .score-card, .question-card, .node-card, .end-card { padding: 18px; }
-      .wrap { width: min(100% - 18px, 1250px); }
-    }
-
-    @media (max-width: 520px) {
-      .node-grid { grid-template-columns: 1fr; }
-      .name-row { flex-direction: column; }
-      .name-row .btn { width: 100%; }
+      .node {
+        min-height: 66px;
+        font-size: 0.95rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="hero" id="heroSection">
-      <div class="panel hero-card">
-        <div class="small-label">AP CSA • Recursion</div>
-        <h1>Recursion Relay</h1>
-        <p class="subtitle">
-          Start at the <strong>Start</strong> node. Solve the recursion question on the screen, then click the node whose displayed answer matches your result.
-          Each correct click opens the next question. One wrong click on a question means that question earns <strong>0 points</strong>, which makes random guessing a bad idea.
-        </p>
-        <div class="pill-row">
-          <div class="pill">Clickable answer nodes</div>
-          <div class="pill">Name locked after start</div>
-          <div class="pill">Score out of 20</div>
-        </div>
-        <div class="name-row">
-          <input class="text-input" id="playerNameInput" type="text" maxlength="30" placeholder="Enter student name" autocomplete="name" />
-          <button class="btn btn-primary" id="beginBtn">Start Game</button>
-        </div>
-        <div class="message" id="startMessage"></div>
-      </div>
+  <header>
+    <h1>Recursion Relay</h1>
+    <div class="subtitle">Follow the answers through the recursion maze.</div>
+  </header>
 
-      <div class="panel side-card">
-        <div class="small-label">How scoring works</div>
-        <div class="side-list">
-          <div class="side-item"><strong>2 points</strong> for getting a question right on the first node click.</div>
-          <div class="side-item"><strong>0 points</strong> for that question after any wrong node click.</div>
-          <div class="side-item">You still must find the correct node to continue the trail.</div>
-          <div class="side-item">Final scoreboard shows name, correct answers, and score out of 20.</div>
-        </div>
+  <main>
+    <section id="startScreen" class="screen">
+      <div class="card">
+        <h2>Start the Game</h2>
+        <p>Enter your name before you begin.</p>
+        <input id="studentName" type="text" maxlength="40" placeholder="Your name" />
+        <br />
+        <button id="startBtn">Start Game</button>
+        <div class="smallNote">Once the game starts, your name is locked for that round.</div>
       </div>
     </section>
 
-    <section class="game hidden" id="gameArea">
-      <aside class="panel score-card">
-        <div class="small-label">Player</div>
-        <div style="font-size:1.2rem;font-weight:850;" id="playerNameDisplay">—</div>
-
-        <div class="small-label" style="margin-top:20px;">Progress</div>
-        <div style="margin-top:6px;font-size:1.08rem;font-weight:800;">Question <span id="questionNumber">1</span> of 10</div>
-        <div class="meter"><div class="meter-bar" id="meterBar"></div></div>
-        <div class="muted" id="progressText">0 completed • 10 remaining</div>
-
-        <div class="score-grid">
-          <div class="stat">Correct Nodes<strong id="correctCount">0</strong></div>
-          <div class="stat">Score / 20<strong id="scoreCount">0</strong></div>
-          <div class="stat">Wrong Clicks<strong id="wrongCount">0</strong></div>
-          <div class="stat">This Question<strong id="questionWorth">2 pts</strong></div>
-        </div>
-      </aside>
-
-      <main>
-        <section class="panel question-card">
-          <div class="small-label" id="questionTag">Start Question</div>
-          <h2 id="questionTitle">Loading...</h2>
-          <p class="subtitle" id="questionPrompt"></p>
-          <pre id="codeBlock"></pre>
-          <div class="message" id="gameMessage"></div>
-          <div class="tip" id="tipBox">
-            Solve the current question yourself, then click the node that shows the answer you got.
-          </div>
-        </section>
-
-        <section class="panel node-card">
-          <div class="small-label">Answer Nodes</div>
-          <div class="node-grid" id="nodeGrid"></div>
-        </section>
-      </main>
-    </section>
-
-    <section class="panel end-card hidden" id="endScreen">
-      <div class="small-label">Quest complete</div>
-      <h2>Scoreboard</h2>
-      <p class="subtitle" style="max-width:62ch;margin:0 auto;">You followed the recursion trail all the way to the end.</p>
-      <div class="scoreboard">
-        <div class="muted">Student</div>
-        <div style="font-size:1.4rem;font-weight:850;" id="finalName">—</div>
-        <div class="big-score" id="finalScore">0 / 20</div>
-        <div class="muted" id="finalDetails"></div>
-        <div class="muted" id="bestScoreLine" style="margin-top:8px;"></div>
+    <section id="gameScreen" class="screen hidden">
+      <div class="topBar">
+        <div class="pill" id="namePill">Name:</div>
+        <div class="pill" id="progressPill">Question: 1 / 10</div>
+        <div class="pill" id="scorePill">Score: 0 / 20</div>
+        <div class="pill" id="bestPill">Best: 0 / 20</div>
       </div>
-      <button class="btn btn-primary" id="playAgainBtn" style="margin-top:20px;">Play Again With Same Name</button>
+
+      <div id="questionBox"></div>
+      <div id="message"></div>
+      <div id="nodes"></div>
     </section>
 
-    <div class="footer-note">Single-file HTML game for GitHub Pages.</div>
-  </div>
+    <section id="endScreen" class="screen hidden">
+      <div class="card">
+        <h2>Scoreboard</h2>
+        <div class="scoreLine">Student: <strong id="finalName"></strong></div>
+        <div class="scoreLine">Correct Questions: <span id="finalCorrect"></span> / 10</div>
+        <div class="scoreLine">Wrong Node Clicks: <span id="finalWrong"></span></div>
+        <div class="scoreLine bigScore">Score: <span id="finalScore"></span> / 20</div>
+        <div class="scoreLine">Best Score So Far: <strong id="finalBest"></strong> / 20</div>
+        <button id="replayBtn">Replay</button>
+      </div>
+    </section>
+  </main>
 
   <script>
-    const nodes = [
-      { id: 1, label: 'Start', answer: '7', nextQuestionId: 6 },
-      { id: 2, label: 'Node 2', answer: '30', nextQuestionId: 5 },
-      { id: 3, label: 'Node 3', answer: '27', nextQuestionId: 8 },
-      { id: 4, label: 'Node 4', answer: 'utermputercomputer', nextQuestionId: 10 },
-      { id: 5, label: 'Node 5', answer: '47', nextQuestionId: 7 },
-      { id: 6, label: 'Node 6', answer: '40', nextQuestionId: 9 },
-      { id: 7, label: 'Node 7', answer: '91', nextQuestionId: 4 },
-      { id: 8, label: 'Node 8', answer: '71', nextQuestionId: 2 },
-      { id: 9, label: 'Node 9', answer: '16', nextQuestionId: 3 },
-      { id: 10, label: 'Node 10', answer: 'computermputeruterter', nextQuestionId: null }
-    ];
-
-    const questions = {
-      1: {
-        label: 'Start Question',
-        title: 'public static int first(int a, int b)',
-        prompt: 'What will the call first(10, 4) return?',
-        answer: '7',
-        code: `public static int first(int a, int b)
+    const originalQuestions = [
+      {
+        q: `public static int first(int a, int b)
 {
-    if (a < b)
-       return 1 + first(a + 1, b);
-    if (b < a)
-       return 1 + first(a, b + 1);
-    return 1;
-}`
+   if (a < b)
+      return 1 + first(a + 1, b);
+   if (b < a)
+      return 1 + first(a, b + 1);
+   return 1;
+}
+
+What will the call first(10, 4) return?`,
+        answer: "7"
       },
-      2: {
-        label: 'Question 2',
-        title: 'public static int comp(int x)',
-        prompt: 'What will the call comp(10) return?',
-        answer: '30',
-        code: `public static int comp(int x)
+      {
+        q: `public static int comp(int x)
 {
    if (x <= 0)
       return 0;
    if (x % 2 == 0)
       return x + comp(x - 2);
    return x + comp(x - 1);
-}`
-      },
-      3: {
-        label: 'Question 3',
-        title: 'public static int mystery(int x)',
-        prompt: 'What will the call mystery(3) return?',
-        answer: '27',
-        code: `public static int mystery(int x)
-{
-    if (x <= 1)
-       return 3;
+}
 
-    return 3 * mystery(x - 1);
-}`
+What will the call comp(10) return?`,
+        answer: "30"
       },
-      4: {
-        label: 'Question 4',
-        title: 'public static void sleek(String str)',
-        prompt: 'What will the call sleek("computer") print?',
-        answer: 'utermputercomputer',
-        code: `public static void sleek(String str)
+      {
+        q: `public static int mystery(int x)
 {
-    if (str.length() > 2)
-    {
-        sleek(str.substring(2));
-        System.out.print(str);
-    }
-}`
+   if (x <= 1)
+      return 3;
+
+   return 3 * mystery(x - 1);
+}
+
+What will the call mystery(3) return?`,
+        answer: "27"
       },
-      5: {
-        label: 'Question 5',
-        title: 'public static int end(int a)',
-        prompt: 'What will the call end(4) return?',
-        answer: '47',
-        code: `public static int end(int a)
+      {
+        q: `public static void sleek(String str)
+{
+   if (str.length() > 2)
+   {
+      sleek(str.substring(2));
+      System.out.print(str);
+   }
+}
+
+What will the call sleek("computer") print?`,
+        answer: "utermputercomputer"
+      },
+      {
+        q: `public static int end(int a)
 {
    if (a > 10)
       return 2;
@@ -545,252 +317,321 @@
       return 5 + end(a + 2);
 
    return a + end(a + 1);
-}`
-      },
-      6: {
-        label: 'Question 6',
-        title: 'public static int recur(int a)',
-        prompt: 'What will the call recur(5) return?',
-        answer: '40',
-        code: `public static int recur(int a)
-{
-    if (a == 0)
-       return 0;
+}
 
-    return recur(a - 1) + a * (a - 1);
-}`
+What will the call end(4) return?`,
+        answer: "47"
       },
-      7: {
-        label: 'Question 7',
-        title: 'public static int stuff(int x)',
-        prompt: 'What will the call stuff(13) return?',
-        answer: '91',
-        code: `public static int stuff(int x)
+      {
+        q: `public static int recur(int a)
 {
-    if (x > 0)
-       return x + stuff(x - 1);
+   if (a == 0)
+      return 0;
 
-    return 0;
-}`
-      },
-      8: {
-        label: 'Question 8',
-        title: 'public static int hello(int x, int y, int z)',
-        prompt: 'What will the call hello(10, 3, 5) return?',
-        answer: '71',
-        code: `public static int hello(int x, int y, int z)
-{
-    if (x > z)
-       return x + (y % 2) + hello(x - z, y - 1, z + 1);
+   return recur(a - 1) + a * (a - 1);
+}
 
-    return x * y * z;
-}`
+What will the call recur(5) return?`,
+        answer: "40"
       },
-      9: {
-        label: 'Question 9',
-        title: 'public static int go(int x)',
-        prompt: 'What will the call go(5) return?',
-        answer: '16',
-        code: `public static int go(int x)
+      {
+        q: `public static int stuff(int x)
 {
-    if (x < 1)
-       return 1;
+   if (x > 0)
+      return x + stuff(x - 1);
 
-    return x + go(x - 1);
-}`
+   return 0;
+}
+
+What will the call stuff(13) return?`,
+        answer: "91"
       },
-      10: {
-        label: 'Question 10',
-        title: 'public static void ans(String str)',
-        prompt: 'What will the call ans("computer") print?',
-        answer: 'computermputeruterter',
-        code: `public static void ans(String str)
+      {
+        q: `public static int hello(int x, int y, int z)
 {
-    if (str.length() > 2)
-    {
-        System.out.print(str);
-        ans(str.substring(str.length() / 3));
-    }
-}`
+   if (x > z)
+      return x + (y % 2) + hello(x - z, y - 1, z + 1);
+
+   return x * y * z;
+}
+
+What will the call hello(10, 3, 5) return?`,
+        answer: "71"
+      },
+      {
+        q: `public static int go(int x)
+{
+   if (x < 1)
+      return 1;
+
+   return x + go(x - 1);
+}
+
+What will the call go(5) return?`,
+        answer: "16"
+      },
+      {
+        q: `public static void ans(String str)
+{
+   if (str.length() > 2)
+   {
+      System.out.print(str);
+      ans(str.substring(str.length() / 3));
+   }
+}
+
+What will the call ans("computer") print?`,
+        answer: "computermputeruterter"
       }
-    };
+    ];
 
-    const routeOrder = [1, 6, 9, 3, 8, 2, 5, 7, 4, 10];
+    const originalNodeValues = [
+      "7",
+      "30",
+      "27",
+      "47",
+      "40",
+      "91",
+      "71",
+      "16",
+      "utermputercomputer",
+      "computermputeruterter",
+      "12",
+      "18",
+      "19",
+      "33",
+      "55",
+      "84"
+    ];
 
-    const heroSection = document.getElementById('heroSection');
-    const gameArea = document.getElementById('gameArea');
-    const endScreen = document.getElementById('endScreen');
-    const playerNameInput = document.getElementById('playerNameInput');
-    const beginBtn = document.getElementById('beginBtn');
-    const startMessage = document.getElementById('startMessage');
-    const playerNameDisplay = document.getElementById('playerNameDisplay');
-    const questionNumber = document.getElementById('questionNumber');
-    const meterBar = document.getElementById('meterBar');
-    const progressText = document.getElementById('progressText');
-    const correctCount = document.getElementById('correctCount');
-    const scoreCount = document.getElementById('scoreCount');
-    const wrongCount = document.getElementById('wrongCount');
-    const questionWorth = document.getElementById('questionWorth');
-    const questionTag = document.getElementById('questionTag');
-    const questionTitle = document.getElementById('questionTitle');
-    const questionPrompt = document.getElementById('questionPrompt');
-    const codeBlock = document.getElementById('codeBlock');
-    const gameMessage = document.getElementById('gameMessage');
-    const nodeGrid = document.getElementById('nodeGrid');
-    const finalName = document.getElementById('finalName');
-    const finalScore = document.getElementById('finalScore');
-    const finalDetails = document.getElementById('finalDetails');
-    const bestScoreLine = document.getElementById('bestScoreLine');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-
-    let playerName = '';
-    let currentQuestionId = 1;
-    let completedQuestions = new Set();
-    let completedNodes = new Set();
+    let questions = [];
+    let nodeValues = [];
+    let studentName = "";
+    let currentQuestionIndex = 0;
     let score = 0;
-    let correctClicks = 0;
     let wrongClicks = 0;
-    let questionAlreadyMissed = false;
     let bestScore = 0;
-    let gamesPlayed = 0;
+    let questionMistake = false;
+    let usedAnswers = new Set();
+    let gameLocked = false;
 
-    function normalizeAnswer(value) {
-      return String(value).trim().replace(/[“”]/g, '"').replace(/[‘’]/g, "'").toLowerCase();
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const endScreen = document.getElementById("endScreen");
+
+    const studentNameInput = document.getElementById("studentName");
+    const startBtn = document.getElementById("startBtn");
+    const replayBtn = document.getElementById("replayBtn");
+
+    const questionBox = document.getElementById("questionBox");
+    const message = document.getElementById("message");
+
+    const namePill = document.getElementById("namePill");
+    const progressPill = document.getElementById("progressPill");
+    const scorePill = document.getElementById("scorePill");
+    const bestPill = document.getElementById("bestPill");
+
+    const finalName = document.getElementById("finalName");
+    const finalCorrect = document.getElementById("finalCorrect");
+    const finalWrong = document.getElementById("finalWrong");
+    const finalScore = document.getElementById("finalScore");
+    const finalBest = document.getElementById("finalBest");
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
     }
 
-    function getCurrentQuestionIndex() {
-      return routeOrder.indexOf(currentQuestionId) + 1;
+    function cloneArray(arr) {
+      return arr.slice();
     }
 
-    function resetGameState() {
-      currentQuestionId = 1;
-      completedQuestions = new Set();
-      completedNodes = new Set();
+    function startGame() {
+      if (!studentName) {
+        const enteredName = studentNameInput.value.trim();
+        if (enteredName === "") {
+          alert("Please enter your name first.");
+          return;
+        }
+        studentName = enteredName;
+      }
+
+      currentQuestionIndex = 0;
       score = 0;
-      correctClicks = 0;
       wrongClicks = 0;
-      questionAlreadyMissed = false;
-    }
+      questionMistake = false;
+      usedAnswers = new Set();
+      gameLocked = false;
 
-    function updateSidebar() {
-      questionNumber.textContent = getCurrentQuestionIndex();
-      meterBar.style.width = `${(completedQuestions.size / routeOrder.length) * 100}%`;
-      progressText.textContent = `${completedQuestions.size} completed • ${routeOrder.length - completedQuestions.size} remaining`;
-      correctCount.textContent = correctClicks;
-      scoreCount.textContent = score;
-      wrongCount.textContent = wrongClicks;
-      questionWorth.textContent = questionAlreadyMissed ? '0 pts' : '2 pts';
-      playerNameDisplay.textContent = playerName;
-    }
+      questions = cloneArray(originalQuestions);
+      nodeValues = cloneArray(originalNodeValues);
 
-    function renderCurrentQuestion() {
-      const q = questions[currentQuestionId];
-      questionTag.textContent = q.label;
-      questionTitle.textContent = q.title;
-      questionPrompt.textContent = q.prompt;
-      codeBlock.textContent = q.code;
-      gameMessage.textContent = '';
-      gameMessage.className = 'message';
-      questionAlreadyMissed = false;
-      updateSidebar();
+      shuffle(questions);
+      shuffle(nodeValues);
+
+      startScreen.classList.add("hidden");
+      endScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+
+      studentNameInput.disabled = true;
+
+      updateTopBar();
+      loadQuestion();
       renderNodes();
+      clearMessage();
+    }
+
+    function updateTopBar() {
+      namePill.textContent = "Name: " + studentName;
+      progressPill.textContent = "Question: " + (currentQuestionIndex + 1) + " / " + questions.length;
+      scorePill.textContent = "Score: " + score + " / 20";
+      bestPill.textContent = "Best: " + bestScore + " / 20";
+    }
+
+    function loadQuestion() {
+      const currentQuestion = questions[currentQuestionIndex];
+      let label = "";
+
+      if (currentQuestionIndex === 0) {
+        label = "START QUESTION\n\n";
+      }
+
+      questionBox.textContent = label + currentQuestion.q;
+      updateTopBar();
     }
 
     function renderNodes() {
-      nodeGrid.innerHTML = '';
+      const nodesContainer = document.getElementById("nodes");
+      nodesContainer.innerHTML = "";
+
+      for (const value of nodeValues) {
+        const node = document.createElement("div");
+        node.className = "node";
+        node.textContent = value;
+        node.dataset.value = value;
+
+        if (usedAnswers.has(value)) {
+          node.classList.add("used");
+        } else {
+          node.addEventListener("click", () => handleNodeClick(value, node));
+        }
+
+        nodesContainer.appendChild(node);
+      }
+    }
+
+    function showCorrectMessage(text) {
+      message.textContent = text;
+      message.className = "correctMsg";
+    }
+
+    function showWrongMessage(text) {
+      message.textContent = text;
+      message.className = "wrongMsg";
+    }
+
+    function clearMessage() {
+      message.textContent = "";
+      message.className = "";
+    }
+
+    function disableAllNodesTemporarily() {
+      const nodes = document.querySelectorAll(".node");
+      nodes.forEach(node => node.classList.add("disabledTemp"));
+    }
+
+    function enableAvailableNodes() {
+      const nodes = document.querySelectorAll(".node");
       nodes.forEach(node => {
-        const btn = document.createElement('button');
-        btn.className = 'node';
-        if (node.label === 'Start') btn.classList.add('start');
-        if (completedNodes.has(node.id)) btn.classList.add('completed');
-        btn.innerHTML = `
-          <div class="node-label">${node.label}</div>
-          <div class="node-answer">${node.answer}</div>
-        `;
-        if (completedNodes.has(node.id)) btn.disabled = true;
-        btn.addEventListener('click', () => handleNodeClick(node, btn));
-        nodeGrid.appendChild(btn);
+        node.classList.remove("disabledTemp");
+        if (node.classList.contains("used")) {
+          node.classList.add("disabledTemp");
+        }
       });
     }
 
-    function handleNodeClick(node, btn) {
-      const expected = normalizeAnswer(questions[currentQuestionId].answer);
-      const clicked = normalizeAnswer(node.answer);
-
-      if (clicked === expected) {
-        completedQuestions.add(currentQuestionId);
-        completedNodes.add(node.id);
-        correctClicks += 1;
-        if (!questionAlreadyMissed) score += 2;
-
-        gameMessage.textContent = questionAlreadyMissed
-          ? 'Correct node clicked. You may continue, but this question already lost its 2 points because of an earlier wrong click.'
-          : 'Correct node clicked. Next question unlocked.';
-        gameMessage.className = 'message good';
-        updateSidebar();
-
-        setTimeout(() => {
-          if (node.nextQuestionId === null) {
-            finishGame();
-          } else {
-            currentQuestionId = node.nextQuestionId;
-            renderCurrentQuestion();
-          }
-        }, 950);
-      } else {
-        wrongClicks += 1;
-        questionAlreadyMissed = true;
-        gameMessage.textContent = 'Incorrect node clicked.';
-        gameMessage.className = 'message bad';
-        updateSidebar();
-        btn.classList.add('wrongflash');
-        setTimeout(() => btn.classList.remove('wrongflash'), 420);
-      }
-    }
-
-    function finishGame() {
-      gamesPlayed += 1;
-      bestScore = Math.max(bestScore, score);
-      gameArea.classList.add('hidden');
-      endScreen.classList.remove('hidden');
-      finalName.textContent = playerName;
-      finalScore.textContent = `${score} / 20`;
-      finalDetails.textContent = `${correctClicks} correct node selections • ${wrongClicks} wrong clicks`;
-      bestScoreLine.textContent = gamesPlayed > 1 ? `Best score so far: ${bestScore} / 20` : `Best score so far: ${score} / 20`;
-    }
-
-    beginBtn.addEventListener('click', () => {
-      const enteredName = playerNameInput.value.trim();
-      if (!enteredName) {
-        startMessage.textContent = 'Please enter the student name before starting.';
-        startMessage.className = 'message bad';
+    function handleNodeClick(value, nodeElement) {
+      if (gameLocked) {
         return;
       }
 
-      playerName = enteredName;
-      playerNameInput.value = playerName;
-      playerNameInput.disabled = true;
-      beginBtn.disabled = true;
-      startMessage.textContent = '';
-      resetGameState();
-      heroSection.classList.add('hidden');
-      endScreen.classList.add('hidden');
-      gameArea.classList.remove('hidden');
-      renderCurrentQuestion();
+      if (usedAnswers.has(value)) {
+        return;
+      }
+
+      const correctAnswer = questions[currentQuestionIndex].answer;
+
+      if (value === correctAnswer) {
+        gameLocked = true;
+        usedAnswers.add(value);
+        nodeElement.classList.add("used");
+
+        if (!questionMistake) {
+          score += 2;
+        }
+
+        showCorrectMessage("Correct node!");
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex === questions.length) {
+          updateTopBar();
+          setTimeout(endGame, 700);
+          return;
+        }
+
+        updateTopBar();
+        disableAllNodesTemporarily();
+
+        setTimeout(() => {
+          loadQuestion();
+          clearMessage();
+          renderNodes();
+          gameLocked = false;
+        }, 850);
+      } else {
+        wrongClicks++;
+        questionMistake = true;
+        showWrongMessage("Incorrect node clicked!");
+
+        nodeElement.classList.add("wrongFlash");
+        setTimeout(() => {
+          nodeElement.classList.remove("wrongFlash");
+        }, 450);
+
+        updateTopBar();
+      }
+    }
+
+    function endGame() {
+      if (score > bestScore) {
+        bestScore = score;
+      }
+
+      gameScreen.classList.add("hidden");
+      endScreen.classList.remove("hidden");
+
+      finalName.textContent = studentName;
+      finalCorrect.textContent = score / 2;
+      finalWrong.textContent = wrongClicks;
+      finalScore.textContent = score;
+      finalBest.textContent = bestScore;
+
+      bestPill.textContent = "Best: " + bestScore + " / 20";
+    }
+
+    startBtn.addEventListener("click", startGame);
+
+    replayBtn.addEventListener("click", () => {
+      startGame();
     });
 
-    playerNameInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') beginBtn.click();
+    studentNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        startGame();
+      }
     });
-
-    playAgainBtn.addEventListener('click', () => {
-      resetGameState();
-      endScreen.classList.add('hidden');
-      gameArea.classList.remove('hidden');
-      renderCurrentQuestion();
-    });
-
-    renderNodes();
   </script>
 </body>
 </html>
