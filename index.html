@@ -178,10 +178,6 @@
       opacity: 1;
     }
 
-    .node.disabledTemp {
-      pointer-events: none;
-    }
-
     .smallNote {
       margin-top: 12px;
       color: #4d5b7c;
@@ -230,7 +226,7 @@
         <input id="studentName" type="text" maxlength="40" placeholder="Your name" />
         <br />
         <button id="startBtn">Start Game</button>
-        <div class="smallNote">Once the game starts, your name stays locked for your replays too.</div>
+        <div class="smallNote">Once the game starts, your name stays locked for replays.</div>
       </div>
     </section>
 
@@ -416,9 +412,9 @@ What will the call ans("computer") print?`,
     let score = 0;
     let wrongClicks = 0;
     let bestScore = 0;
-    let questionMistake = false;
     let usedAnswers = new Set();
     let gameLocked = false;
+    let canEarnPoints = true;
 
     const startScreen = document.getElementById("startScreen");
     const gameScreen = document.getElementById("gameScreen");
@@ -466,9 +462,9 @@ What will the call ans("computer") print?`,
       currentQuestionIndex = 0;
       score = 0;
       wrongClicks = 0;
-      questionMistake = false;
       usedAnswers = new Set();
       gameLocked = false;
+      canEarnPoints = true;
 
       questions = shuffle(originalQuestions);
       nodeValues = shuffle(originalNodeValues);
@@ -491,7 +487,7 @@ What will the call ans("computer") print?`,
     }
 
     function loadQuestion() {
-      questionMistake = false;
+      canEarnPoints = true;
 
       const currentQuestion = questions[currentQuestionIndex];
       let label = "";
@@ -512,7 +508,6 @@ What will the call ans("computer") print?`,
         const node = document.createElement("div");
         node.className = "node";
         node.textContent = value;
-        node.dataset.value = value;
 
         if (usedAnswers.has(value)) {
           node.classList.add("used");
@@ -551,20 +546,18 @@ What will the call ans("computer") print?`,
         usedAnswers.add(value);
         nodeElement.classList.add("used");
 
-        if (!questionMistake) {
+        if (canEarnPoints) {
           score += 2;
         }
 
         showCorrectMessage("Correct node!");
         currentQuestionIndex++;
+        updateTopBar();
 
         if (currentQuestionIndex === questions.length) {
-          updateTopBar();
           setTimeout(endGame, 700);
           return;
         }
-
-        updateTopBar();
 
         setTimeout(() => {
           loadQuestion();
@@ -574,7 +567,7 @@ What will the call ans("computer") print?`,
         }, 850);
       } else {
         wrongClicks++;
-        questionMistake = true;
+        canEarnPoints = false;
         showWrongMessage("Incorrect node clicked!");
 
         nodeElement.classList.add("wrongFlash");
@@ -599,6 +592,7 @@ What will the call ans("computer") print?`,
       finalWrong.textContent = wrongClicks;
       finalScore.textContent = score;
       finalBest.textContent = bestScore;
+
       bestPill.textContent = "Best: " + bestScore + " / 20";
     }
 
