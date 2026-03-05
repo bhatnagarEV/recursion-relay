@@ -67,6 +67,11 @@
       border-color: #2f5fbf;
     }
 
+    input[type="text"]:disabled {
+      background: #eef2fb;
+      color: #5c6780;
+    }
+
     button {
       margin-top: 14px;
       padding: 12px 22px;
@@ -166,7 +171,7 @@
     }
 
     .node.used {
-      background: #7edc8c;
+      background: #6fd37d;
       border-color: #1b8a34;
       color: #103d18;
       cursor: not-allowed;
@@ -225,7 +230,7 @@
         <input id="studentName" type="text" maxlength="40" placeholder="Your name" />
         <br />
         <button id="startBtn">Start Game</button>
-        <div class="smallNote">Once the game starts, your name is locked for that round.</div>
+        <div class="smallNote">Once the game starts, your name stays locked for your replays too.</div>
       </div>
     </section>
 
@@ -438,14 +443,12 @@ What will the call ans("computer") print?`,
     const finalBest = document.getElementById("finalBest");
 
     function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+        [copy[i], copy[j]] = [copy[j], copy[i]];
       }
-    }
-
-    function cloneArray(arr) {
-      return arr.slice();
+      return copy;
     }
 
     function startGame() {
@@ -456,6 +459,8 @@ What will the call ans("computer") print?`,
           return;
         }
         studentName = enteredName;
+        studentNameInput.value = studentName;
+        studentNameInput.disabled = true;
       }
 
       currentQuestionIndex = 0;
@@ -465,17 +470,12 @@ What will the call ans("computer") print?`,
       usedAnswers = new Set();
       gameLocked = false;
 
-      questions = cloneArray(originalQuestions);
-      nodeValues = cloneArray(originalNodeValues);
-
-      shuffle(questions);
-      shuffle(nodeValues);
+      questions = shuffle(originalQuestions);
+      nodeValues = shuffle(originalNodeValues);
 
       startScreen.classList.add("hidden");
       endScreen.classList.add("hidden");
       gameScreen.classList.remove("hidden");
-
-      studentNameInput.disabled = true;
 
       updateTopBar();
       loadQuestion();
@@ -491,6 +491,8 @@ What will the call ans("computer") print?`,
     }
 
     function loadQuestion() {
+      questionMistake = false;
+
       const currentQuestion = questions[currentQuestionIndex];
       let label = "";
 
@@ -537,27 +539,8 @@ What will the call ans("computer") print?`,
       message.className = "";
     }
 
-    function disableAllNodesTemporarily() {
-      const nodes = document.querySelectorAll(".node");
-      nodes.forEach(node => node.classList.add("disabledTemp"));
-    }
-
-    function enableAvailableNodes() {
-      const nodes = document.querySelectorAll(".node");
-      nodes.forEach(node => {
-        node.classList.remove("disabledTemp");
-        if (node.classList.contains("used")) {
-          node.classList.add("disabledTemp");
-        }
-      });
-    }
-
     function handleNodeClick(value, nodeElement) {
-      if (gameLocked) {
-        return;
-      }
-
-      if (usedAnswers.has(value)) {
+      if (gameLocked || usedAnswers.has(value)) {
         return;
       }
 
@@ -582,7 +565,6 @@ What will the call ans("computer") print?`,
         }
 
         updateTopBar();
-        disableAllNodesTemporarily();
 
         setTimeout(() => {
           loadQuestion();
@@ -617,15 +599,11 @@ What will the call ans("computer") print?`,
       finalWrong.textContent = wrongClicks;
       finalScore.textContent = score;
       finalBest.textContent = bestScore;
-
       bestPill.textContent = "Best: " + bestScore + " / 20";
     }
 
     startBtn.addEventListener("click", startGame);
-
-    replayBtn.addEventListener("click", () => {
-      startGame();
-    });
+    replayBtn.addEventListener("click", startGame);
 
     studentNameInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
