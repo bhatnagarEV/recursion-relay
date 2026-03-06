@@ -51,7 +51,7 @@
 
     #startScreen .card,
     #endScreen .card {
-      max-width: 620px;
+      max-width: 720px;
     }
 
     input[type="text"] {
@@ -105,7 +105,19 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
     }
 
-    #questionBox {
+    .instructions {
+      max-width: 860px;
+      margin: 0 auto 18px;
+      background: #fff8db;
+      border: 2px solid #f0d97a;
+      border-radius: 14px;
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    #questionDisplay {
       max-width: 860px;
       margin: 0 auto 24px;
       background: white;
@@ -182,6 +194,7 @@
       margin-top: 12px;
       color: #4d5b7c;
       font-size: 0.95rem;
+      line-height: 1.45;
     }
 
     .scoreLine {
@@ -200,13 +213,17 @@
     }
 
     @media (max-width: 640px) {
-      #questionBox {
+      #questionDisplay {
         font-size: 0.94rem;
         padding: 18px;
       }
 
       .node {
         min-height: 66px;
+        font-size: 0.95rem;
+      }
+
+      .instructions {
         font-size: 0.95rem;
       }
     }
@@ -226,19 +243,29 @@
         <input id="studentName" type="text" maxlength="40" placeholder="Your name" />
         <br />
         <button id="startBtn">Start Game</button>
-        <div class="smallNote">Once the game starts, your name stays locked for replays.</div>
+        <div class="smallNote">
+          <strong>Scoring rule:</strong> Each question is worth 2 points.
+          You earn the 2 points only if your <strong>first click</strong> is correct.
+          If your first click is wrong, that question earns 0 points.
+        </div>
       </div>
     </section>
 
     <section id="gameScreen" class="screen hidden">
       <div class="topBar">
         <div class="pill" id="namePill">Name:</div>
-        <div class="pill" id="progressPill">Question: 1 / 10</div>
+        <div class="pill" id="questionPill">Question: 1 / 10</div>
         <div class="pill" id="scorePill">Score: 0 / 20</div>
-        <div class="pill" id="bestPill">Best: 0 / 20</div>
+        <div class="pill" id="wrongPill">Incorrect Clicks: 0</div>
       </div>
 
-      <div id="questionBox"></div>
+      <div class="instructions">
+        <strong>How to play:</strong> Read the current recursion question, then click the node that shows the correct answer.
+        Correct nodes stay green so you do not click them again.
+        If your <strong>first click</strong> for a question is wrong, that question earns <strong>0 points</strong>.
+      </div>
+
+      <div id="questionDisplay"></div>
       <div id="message"></div>
       <div id="nodes"></div>
     </section>
@@ -247,10 +274,8 @@
       <div class="card">
         <h2>Scoreboard</h2>
         <div class="scoreLine">Student: <strong id="finalName"></strong></div>
-        <div class="scoreLine">Correct Questions: <span id="finalCorrect"></span> / 10</div>
-        <div class="scoreLine">Wrong Node Clicks: <span id="finalWrong"></span></div>
-        <div class="scoreLine bigScore">Score: <span id="finalScore"></span> / 20</div>
-        <div class="scoreLine">Best Score So Far: <strong id="finalBest"></strong> / 20</div>
+        <div class="scoreLine">Final Score: <strong id="finalScore"></strong> / 20</div>
+        <div class="scoreLine">Incorrect Clicks: <span id="finalWrong"></span></div>
         <button id="replayBtn">Replay</button>
       </div>
     </section>
@@ -411,10 +436,9 @@ What will the call ans("computer") print?`,
     let currentQuestionIndex = 0;
     let score = 0;
     let wrongClicks = 0;
-    let bestScore = 0;
     let usedAnswers = new Set();
     let gameLocked = false;
-    let canEarnPoints = true;
+    let firstClickStillEligible = true;
 
     const startScreen = document.getElementById("startScreen");
     const gameScreen = document.getElementById("gameScreen");
@@ -424,19 +448,17 @@ What will the call ans("computer") print?`,
     const startBtn = document.getElementById("startBtn");
     const replayBtn = document.getElementById("replayBtn");
 
-    const questionBox = document.getElementById("questionBox");
+    const questionDisplay = document.getElementById("questionDisplay");
     const message = document.getElementById("message");
 
     const namePill = document.getElementById("namePill");
-    const progressPill = document.getElementById("progressPill");
+    const questionPill = document.getElementById("questionPill");
     const scorePill = document.getElementById("scorePill");
-    const bestPill = document.getElementById("bestPill");
+    const wrongPill = document.getElementById("wrongPill");
 
     const finalName = document.getElementById("finalName");
-    const finalCorrect = document.getElementById("finalCorrect");
-    const finalWrong = document.getElementById("finalWrong");
     const finalScore = document.getElementById("finalScore");
-    const finalBest = document.getElementById("finalBest");
+    const finalWrong = document.getElementById("finalWrong");
 
     function shuffle(array) {
       const copy = [...array];
@@ -447,57 +469,36 @@ What will the call ans("computer") print?`,
       return copy;
     }
 
-    function startGame() {
-      if (!studentName) {
-        const enteredName = studentNameInput.value.trim();
-        if (enteredName === "") {
-          alert("Please enter your name first.");
-          return;
-        }
-        studentName = enteredName;
-        studentNameInput.value = studentName;
-        studentNameInput.disabled = true;
-      }
-
-      currentQuestionIndex = 0;
-      score = 0;
-      wrongClicks = 0;
-      usedAnswers = new Set();
-      gameLocked = false;
-      canEarnPoints = true;
-
-      questions = shuffle(originalQuestions);
-      nodeValues = shuffle(originalNodeValues);
-
-      startScreen.classList.add("hidden");
-      endScreen.classList.add("hidden");
-      gameScreen.classList.remove("hidden");
-
-      updateTopBar();
-      loadQuestion();
-      renderNodes();
-      clearMessage();
+    function updateScoreboard() {
+      namePill.textContent = "Name: " + studentName;
+      questionPill.textContent = "Question: " + (currentQuestionIndex + 1) + " / " + questions.length;
+      scorePill.textContent = "Score: " + score + " / 20";
+      wrongPill.textContent = "Incorrect Clicks: " + wrongClicks;
     }
 
-    function updateTopBar() {
-      namePill.textContent = "Name: " + studentName;
-      progressPill.textContent = "Question: " + (currentQuestionIndex + 1) + " / " + questions.length;
-      scorePill.textContent = "Score: " + score + " / 20";
-      bestPill.textContent = "Best: " + bestScore + " / 20";
+    function showCorrectMessage(text) {
+      message.textContent = text;
+      message.className = "correctMsg";
+    }
+
+    function showWrongMessage(text) {
+      message.textContent = text;
+      message.className = "wrongMsg";
+    }
+
+    function clearMessage() {
+      message.textContent = "";
+      message.className = "";
     }
 
     function loadQuestion() {
-      canEarnPoints = true;
+      firstClickStillEligible = true;
 
       const currentQuestion = questions[currentQuestionIndex];
-      let label = "";
+      const label = currentQuestionIndex === 0 ? "START QUESTION\n\n" : "";
+      questionDisplay.textContent = label + currentQuestion.q;
 
-      if (currentQuestionIndex === 0) {
-        label = "START QUESTION\n\n";
-      }
-
-      questionBox.textContent = label + currentQuestion.q;
-      updateTopBar();
+      updateScoreboard();
     }
 
     function renderNodes() {
@@ -519,19 +520,36 @@ What will the call ans("computer") print?`,
       }
     }
 
-    function showCorrectMessage(text) {
-      message.textContent = text;
-      message.className = "correctMsg";
-    }
+    function startGame() {
+      if (!studentName) {
+        const enteredName = studentNameInput.value.trim();
+        if (enteredName === "") {
+          alert("Please enter your name first.");
+          return;
+        }
+        studentName = enteredName;
+        studentNameInput.value = studentName;
+        studentNameInput.disabled = true;
+      }
 
-    function showWrongMessage(text) {
-      message.textContent = text;
-      message.className = "wrongMsg";
-    }
+      currentQuestionIndex = 0;
+      score = 0;
+      wrongClicks = 0;
+      usedAnswers = new Set();
+      gameLocked = false;
+      firstClickStillEligible = true;
 
-    function clearMessage() {
-      message.textContent = "";
-      message.className = "";
+      questions = shuffle(originalQuestions);
+      nodeValues = shuffle(originalNodeValues);
+
+      startScreen.classList.add("hidden");
+      endScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+
+      loadQuestion();
+      renderNodes();
+      clearMessage();
+      updateScoreboard();
     }
 
     function handleNodeClick(value, nodeElement) {
@@ -546,13 +564,13 @@ What will the call ans("computer") print?`,
         usedAnswers.add(value);
         nodeElement.classList.add("used");
 
-        if (canEarnPoints) {
+        if (firstClickStillEligible) {
           score += 2;
         }
 
         showCorrectMessage("Correct node!");
         currentQuestionIndex++;
-        updateTopBar();
+        updateScoreboard();
 
         if (currentQuestionIndex === questions.length) {
           setTimeout(endGame, 700);
@@ -561,39 +579,32 @@ What will the call ans("computer") print?`,
 
         setTimeout(() => {
           loadQuestion();
-          clearMessage();
           renderNodes();
+          clearMessage();
           gameLocked = false;
         }, 850);
       } else {
         wrongClicks++;
-        canEarnPoints = false;
-        showWrongMessage("Incorrect node clicked!");
+        firstClickStillEligible = false;
 
+        showWrongMessage("Incorrect node clicked!");
         nodeElement.classList.add("wrongFlash");
+
         setTimeout(() => {
           nodeElement.classList.remove("wrongFlash");
         }, 450);
 
-        updateTopBar();
+        updateScoreboard();
       }
     }
 
     function endGame() {
-      if (score > bestScore) {
-        bestScore = score;
-      }
-
       gameScreen.classList.add("hidden");
       endScreen.classList.remove("hidden");
 
       finalName.textContent = studentName;
-      finalCorrect.textContent = score / 2;
-      finalWrong.textContent = wrongClicks;
       finalScore.textContent = score;
-      finalBest.textContent = bestScore;
-
-      bestPill.textContent = "Best: " + bestScore + " / 20";
+      finalWrong.textContent = wrongClicks;
     }
 
     startBtn.addEventListener("click", startGame);
